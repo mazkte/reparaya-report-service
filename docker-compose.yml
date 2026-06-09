@@ -1,0 +1,45 @@
+services:
+  report-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      secrets:
+        - maven_settings
+    image: reparaya/report-service:latest
+    container_name: reparaya-report-service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      MONGODB_URI: ${MONGODB_URI}
+      KEYCLOAK_URL: http://reparaya-keycloak:8080
+      KEYCLOAK_REALM: reparaya
+      UPSTASH_KAFKA_BOOTSTRAP: ${UPSTASH_KAFKA_BOOTSTRAP}
+      UPSTASH_KAFKA_USER: ${UPSTASH_KAFKA_USER}
+      UPSTASH_KAFKA_PASS: ${UPSTASH_KAFKA_PASS}
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+      SPRING_PROFILES_ACTIVE: "dev"
+    networks:
+      - reparaya-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.report.rule=PathPrefix(`/api/reports`)"
+      - "traefik.http.routers.report.entrypoints=web"
+      - "traefik.http.routers.report.middlewares=cors-headers,rate-limit"
+      - "traefik.http.services.report.loadbalancer.server.port=8082"
+      - "traefik.docker.network=reparaya-network"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  reparaya-net:
+    external: true
+    name: reparaya-network
+
+secrets:
+  maven_settings:
+    file: ${MAVEN_SETTINGS_PATH:-~/.m2/settings.xml}
