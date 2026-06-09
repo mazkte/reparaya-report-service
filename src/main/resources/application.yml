@@ -7,7 +7,7 @@ spring:
   data:
     mongodb:
       uuid-representation: java-legacy
-      uri: ${MONGODB_URI:mongodb+srv://mazkte_db_user:zahygFJbPJ9nT9mr@repya-cluster-0.vnhc52x.mongodb.net/?appName=repya-cluster-0}
+      uri: ${MONGODB_URI}
       database: reparaya
       auto-index-creation: true     # crea índices 2dsphere automáticamente
 
@@ -16,28 +16,23 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/${KEYCLOAK_REALM:reparaya}
-          jwk-set-uri: ${KEYCLOAK_URL:http://localhost:8080}/realms/${KEYCLOAK_REALM:reparaya}/protocol/openid-connect/certs
+          issuer-uri: ${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}
+          jwk-set-uri: ${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
 
   # ── Kafka (Upstash) ───────────────────────────────────────
   kafka:
-    bootstrap-servers: ${UPSTASH_KAFKA_BOOTSTRAP:localhost:19092}
+    bootstrap-servers: ${UPSTASH_KAFKA_BOOTSTRAP}
     properties:
-      #sasl.mechanism: SCRAM-SHA-256
       sasl.mechanism: ""
-      #security.protocol: SASL_SSL
       security.protocol: PLAINTEXT
-      #sasl.jaas.config: >
-        #org.apache.kafka.common.security.scram.ScramLoginModule required
-        #username="${UPSTASH_KAFKA_USER}"
-        #password="${UPSTASH_KAFKA_PASS}";
+
 
 # ── Actuator ────────────────────────────────────────────────
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health
   endpoint:
     health:
       show-details: always
