@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import pe.edu.reparaya.report.application.dto.ReportDtos.*;
 import pe.edu.reparaya.report.application.usecase.ReporteUseCase;
 import pe.edu.reparaya.report.domain.model.EstadoReporteEnum;
+import pe.edu.reparaya.shared.util.PageResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,8 +25,6 @@ public class ReporteController {
 
     private final ReporteUseCase reporteUseCase;
 
-    // ── GET /api/reports/{id} ─────────────────────────────────
-
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ROLE_AUTORIDAD','ROLE_SUPERVISOR','ROLE_EMPRESA','ROLE_ADMIN')")
     @Operation(summary = "Obtener reporte por ID")
@@ -33,20 +32,19 @@ public class ReporteController {
         return ResponseEntity.ok(reporteUseCase.obtenerPorId(id));
     }
 
-    // ── GET /api/reports?estado= ──────────────────────────────
-
     @GetMapping
     @PreAuthorize("hasAnyRole('ROLE_AUTORIDAD','ROLE_ADMIN')")
     @Operation(summary = "Listar reportes por estado")
-    public ResponseEntity<List<ReporteResponse>> listar(
+    public ResponseEntity<PageResponse<ReporteResponse>> listar(
             @RequestParam(required = false) EstadoReporteEnum estado) {
-        if (estado != null) {
-            return ResponseEntity.ok(reporteUseCase.listarPorEstado(estado));
-        }
-        return ResponseEntity.ok(reporteUseCase.listarPorEstado(EstadoReporteEnum.PENDIENTE));
-    }
+        if (estado == null) {
+            estado = EstadoReporteEnum.PENDIENTE;
 
-    // ── GET /api/reports/empresa/{empresaId} ──────────────────
+        }
+        List<ReporteResponse> content = reporteUseCase.listarPorEstado(estado);
+        PageResponse response = PageResponse.of(content, 100,1,10);
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/empresa/{empresaId}")
     @PreAuthorize("hasAnyRole('ROLE_EMPRESA','ROLE_AUTORIDAD','ROLE_ADMIN')")
@@ -55,8 +53,6 @@ public class ReporteController {
             @PathVariable UUID empresaId) {
         return ResponseEntity.ok(reporteUseCase.listarPorEmpresa(empresaId));
     }
-
-    // ── GET /api/reports/nearby ───────────────────────────────
 
     @GetMapping("/nearby")
     @PreAuthorize("hasAnyRole('ROLE_AUTORIDAD','ROLE_SUPERVISOR','ROLE_ADMIN')")
@@ -69,16 +65,12 @@ public class ReporteController {
                 reporteUseCase.buscarCercanos(latitud, longitud, radioMetros));
     }
 
-    // ── GET /api/reports/dashboard ────────────────────────────
-
     @GetMapping("/dashboard")
     @PreAuthorize("hasAnyRole('ROLE_AUTORIDAD','ROLE_ADMIN')")
     @Operation(summary = "Obtener métricas del dashboard")
     public ResponseEntity<DashboardResponse> getDashboard() {
         return ResponseEntity.ok(reporteUseCase.getDashboard());
     }
-
-    // ── PATCH /api/reports/{id}/status ────────────────────────
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('ROLE_AUTORIDAD','ROLE_SUPERVISOR','ROLE_EMPRESA','ROLE_ADMIN')")
@@ -91,8 +83,6 @@ public class ReporteController {
         return ResponseEntity.ok(reporteUseCase.actualizarEstado(id, request, actor));
     }
 
-    // ── PATCH /api/reports/{id}/assign ────────────────────────
-
     @PatchMapping("/{id}/assign")
     @PreAuthorize("hasAnyRole('ROLE_AUTORIDAD','ROLE_ADMIN')")
     @Operation(summary = "Asignar empresa al reporte")
@@ -103,8 +93,6 @@ public class ReporteController {
         String actor = jwt.getClaimAsString("preferred_username");
         return ResponseEntity.ok(reporteUseCase.asignarEmpresa(id, request, actor));
     }
-
-    // ── PATCH /api/reports/{id}/escalate ─────────────────────
 
     @PatchMapping("/{id}/escalate")
     @PreAuthorize("hasAnyRole('ROLE_AUTORIDAD','ROLE_ADMIN')")

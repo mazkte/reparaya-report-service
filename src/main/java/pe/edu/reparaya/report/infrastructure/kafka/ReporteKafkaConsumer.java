@@ -47,7 +47,6 @@ public class ReporteKafkaConsumer {
 
             CategoriaEnum categoria = CategoriaEnum.valueOf(categoriaStr);
 
-            // Generar título automático basado en categoría y ubicación
             String titulo = generarTitulo(categoria, descripcion);
 
             reporteUseCase.crearDesdeEvento(eventId,
@@ -55,12 +54,11 @@ public class ReporteKafkaConsumer {
                     latitud, longitud, phoneNumber, mediaUrl
             );
 
-            ack.acknowledge(); // commit manual
+            ack.acknowledge();
             log.info("Reporte creado desde evento Kafka para {}", phoneNumber);
 
         } catch (Exception e) {
             log.error("Error procesando evento report.created: {}", e.getMessage(), e);
-            // No hacer ack — Kafka reintentará el mensaje
         }
     }
 
@@ -72,7 +70,6 @@ public class ReporteKafkaConsumer {
             case ALCANTARILLADO -> "Problema de alcantarillado";
             case OTRO           -> "Reporte ciudadano";
         };
-        // Tomar las primeras palabras de la descripción como subtítulo
         String sub = descripcion != null && descripcion.length() > 30
                 ? descripcion.substring(0, 30) + "..."
                 : descripcion;
