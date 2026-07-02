@@ -11,6 +11,7 @@ import pe.edu.reparaya.report.domain.port.ReporteRepository;
 import pe.edu.reparaya.shared.events.ReporteStatusChangedEvent;
 import pe.edu.reparaya.shared.exception.ReparaYaException;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -26,8 +27,6 @@ public class ReporteUseCase {
 
     private static final String TOPIC_STATUS_CHANGED = "report.status.changed";
 
-    // ── Crear reporte desde evento Kafka ─────────────────────
-
     public ReporteResponse crearDesdeEvento(String eventId, String titulo, String descripcion,
                                              CategoriaEnum categoria,
                                              double latitud, double longitud,
@@ -39,8 +38,6 @@ public class ReporteUseCase {
         log.info("Reporte creado: {} ({})", guardado.getId(), guardado.getCategoria());
         return reporteMapper.toResponse(guardado);
     }
-
-    // ── Consultas ─────────────────────────────────────────────
 
     public ReporteResponse obtenerPorId(UUID id) {
         return reporteRepository.buscarPorId(id)
@@ -62,8 +59,6 @@ public class ReporteUseCase {
                 reporteRepository.buscarCercanos(latitud, longitud, radioMetros));
     }
 
-    // ── Actualizar estado ─────────────────────────────────────
-
     public ReporteResponse actualizarEstado(UUID id, ActualizarEstadoRequest request,
                                              String actor) {
         Reporte reporte = buscarOFallar(id);
@@ -79,8 +74,6 @@ public class ReporteUseCase {
         return reporteMapper.toResponse(actualizado);
     }
 
-    // ── Asignar empresa ───────────────────────────────────────
-
     public ReporteResponse asignarEmpresa(UUID id, AsignarEmpresaRequest request,
                                            String actor) {
         Reporte reporte = buscarOFallar(id);
@@ -95,15 +88,11 @@ public class ReporteUseCase {
         return reporteMapper.toResponse(actualizado);
     }
 
-    // ── Escalar prioridad ─────────────────────────────────────
-
     public ReporteResponse escalarPrioridad(UUID id) {
         Reporte reporte = buscarOFallar(id);
         reporte.escalarPrioridad();
         return reporteMapper.toResponse(reporteRepository.guardar(reporte));
     }
-
-    // ── Dashboard ─────────────────────────────────────────────
 
     public DashboardResponse getDashboard() {
         long total       = Arrays.stream(EstadoReporteEnum.values())
@@ -128,8 +117,6 @@ public class ReporteUseCase {
                 cerradosHoy, criticos, porCategoria, porEstado);
     }
 
-    // ── Privado ───────────────────────────────────────────────
-
     private Reporte buscarOFallar(UUID id) {
         return reporteRepository.buscarPorId(id)
                 .orElseThrow(() -> new ReparaYaException
@@ -139,14 +126,18 @@ public class ReporteUseCase {
     private void publicarCambioEstado(Reporte reporte, EstadoReporteEnum estadoAnterior,
                                        String actor, String observacion) {
         try {
-            ReporteStatusChangedEvent event = ReporteStatusChangedEvent.of(
-                    reporte.getId(),
-                    estadoAnterior.name(),
-                    reporte.getEstado().name(),
-                    actor,
-                    observacion,
-                    reporte.getCiudadanoPhone()
-             );
+
+            ReporteStatusChangedEvent event = new ReporteStatusChangedEvent(
+              UUID.randomUUID(),
+              reporte.getId(),
+              estadoAnterior.name(),
+              reporte.getEstado().name(),
+              actor,
+              observacion,
+              reporte.getCiudadanoPhone(),
+              Instant.now()
+            );
+
             kafkaTemplate.send(TOPIC_STATUS_CHANGED, reporte.getId(), event);
         } catch (Exception e) {
             log.error("Error publicando evento de cambio de estado: {}", e.getMessage());

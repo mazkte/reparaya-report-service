@@ -1,33 +1,5 @@
 services:
 
-  # ── Redpanda (Kafka) ─────────────────────────────────────────
-  redpanda:
-    image: redpandadata/redpanda:latest
-    container_name: reparaya-redpanda
-    restart: unless-stopped
-    ports:
-      - "19092:19092"
-      - "9080:9080"
-    command:
-      - redpanda
-      - start
-      - --kafka-addr=0.0.0.0:19092
-      - --advertise-kafka-addr=localhost:19092
-      - --pandaproxy-addr=0.0.0.0:8082
-      - --advertise-pandaproxy-addr=localhost:8082
-      - --schema-registry-addr=0.0.0.0:8081
-      - --rpc-addr=0.0.0.0:33145
-      - --advertise-rpc-addr=redpanda:33145
-      - --smp=1
-      - --memory=256M
-      - --overprovisioned
-    deploy:
-      resources:
-        limits:
-          memory: 384m
-    networks:
-      - reparaya-net
-
   # ── report-service ───────────────────────────────────────────
   report-service:
     build:
@@ -51,8 +23,6 @@ services:
       resources:
         limits:
           memory: 300m
-    depends_on:
-      - redpanda
     networks:
       - reparaya-net
     healthcheck:
@@ -64,4 +34,5 @@ services:
 
 networks:
   reparaya-net:
-    driver: bridge
+    external: true
+    name: reparaya-network
