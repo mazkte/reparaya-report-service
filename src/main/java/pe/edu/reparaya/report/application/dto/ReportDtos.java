@@ -16,7 +16,7 @@ public class ReportDtos {
     ) {}
 
     public record AsignarEmpresaRequest(
-            UUID   empresaId,
+            String   empresaId,
             String empresaNombre
     ) {}
 

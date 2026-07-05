@@ -79,7 +79,7 @@ public class ReporteUseCase {
         Reporte reporte = buscarOFallar(id);
         EstadoReporteEnum estadoAnterior = reporte.getEstado();
 
-        reporte.asignarEmpresa(request.empresaId(), request.empresaNombre(), actor);
+        reporte.asignarEmpresa(UUID.fromString(request.empresaId()), request.empresaNombre(), actor);
         Reporte actualizado = reporteRepository.guardar(reporte);
 
         publicarCambioEstado(actualizado, estadoAnterior, actor,

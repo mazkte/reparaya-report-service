@@ -33,7 +33,7 @@ public class ReporteController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ROLE_AUTORIDAD','ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_AUTORIDAD','ROLE_ADMIN','ROLE_EMPRESA','ROLE_SUPERVISOR')")
     @Operation(summary = "Listar reportes por estado")
     public ResponseEntity<PageResponse<ReporteResponse>> listar(
             @RequestParam(required = false) EstadoReporteEnum estado) {
@@ -87,11 +87,11 @@ public class ReporteController {
     @PreAuthorize("hasAnyRole('ROLE_AUTORIDAD','ROLE_ADMIN')")
     @Operation(summary = "Asignar empresa al reporte")
     public ResponseEntity<ReporteResponse> asignarEmpresa(
-            @PathVariable UUID id,
+            @PathVariable String id,
             @Valid @RequestBody AsignarEmpresaRequest request,
             @AuthenticationPrincipal Jwt jwt) {
         String actor = jwt.getClaimAsString("preferred_username");
-        return ResponseEntity.ok(reporteUseCase.asignarEmpresa(id, request, actor));
+        return ResponseEntity.ok(reporteUseCase.asignarEmpresa(UUID.fromString(id), request, actor));
     }
 
     @PatchMapping("/{id}/escalate")
